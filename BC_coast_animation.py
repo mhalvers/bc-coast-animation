@@ -2,18 +2,18 @@
 """
 Geospatial map of Vancouver Island and BC Central Coast with topography and bathymetry.
 """
-import xarray as xr
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 from matplotlib import colors
+from matplotlib.animation import FuncAnimation
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.geodesic import Geodesic
 import numpy as np
 import shapely.geometry as sgeom
 import rioxarray
-from matplotlib.animation import FuncAnimation
+import cmocean
 
 matplotlib.use('Agg')
 
@@ -21,7 +21,7 @@ OUTPUT_GIF = "bc_coast_seismic_toy_example.gif"
 FPS = 15
 N_FRAMES = 60
 FIGSIZE = (10, 8)
-TOPO_FILE = "gebco_2025_n54.0_s48.0_w-130.0_e-122.0.tif"
+TOPO_FILE = "exportImage.tiff"  # Path to GeoTIFF file with bathymetry/topography data
 
 EPICENTER_COORDS = (-126.5, 49.7)  # Fictitious epicenter on west coast of Vancouver Island
 RADIUS_MIN, RADIUS_MAX = 1, 100  # km, initial and final circle radius
@@ -47,11 +47,13 @@ except Exception:
     data = np.full((rows, cols), np.nan)
 
 # %% https://matplotlib.org/stable/users/explain/colors/colormapnorms.html#twoslopenorm-different-mapping-on-either-side-of-a-center
-colors_undersea = plt.cm.terrain(np.linspace(0, 0.17, 256))
-colors_land = plt.cm.terrain(np.linspace(0.25, 1, 256))
-all_colors = np.vstack((colors_undersea, colors_land))
-terrain_map = colors.LinearSegmentedColormap.from_list("terrain_map", all_colors)
-divnorm = colors.TwoSlopeNorm(vmin=-3000, vcenter=0, vmax=3000)
+# colors_undersea = plt.cm.terrain(np.linspace(0, 0.17, 256))
+# colors_land = plt.cm.terrain(np.linspace(0.25, 1, 256))
+# all_colors = np.vstack((colors_undersea, colors_land))
+# terrain_map = colors.LinearSegmentedColormap.from_list("terrain_map", all_colors)
+# divnorm = colors.TwoSlopeNorm(vmin=-3000, vcenter=0, vmax=3000)
+
+terrain_map = cmocean.cm.topo
 
 # %% Plot
 fig = plt.figure(figsize=FIGSIZE)
@@ -72,7 +74,7 @@ im = ax.pcolormesh(
     cmap=terrain_map,
     shading="auto",
     rasterized=True,
-    norm=divnorm,
+#    norm=divnorm,
     transform=ccrs.PlateCarree(),
 )
 cb = plt.colorbar(im, ax=ax, label="Elevation (m)", shrink=0.6)
@@ -138,3 +140,5 @@ ani = FuncAnimation(
 # %% Save animation as GIF (uses PillowWriter)
 ani.save(OUTPUT_GIF, writer=PillowWriter(fps=FPS))
 plt.show()
+
+# %%
